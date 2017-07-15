@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">TrackVehicle</string>
     <string name="title_activity_track_maps">Track</string>
+    <string name="title_activity_viewin_maps">Map</string>
+
+    <!--https://github.com/iquesters/gps-tracker-android-->
 </resources>

@@ -1,9 +1,10 @@
-package com.trackvehicle.work.trackvehicle;
+package com.trackvehicle.work.trackvehicle.uiActivity;
 
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
@@ -16,8 +17,6 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -31,8 +30,16 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.trackvehicle.work.trackvehicle.R;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import application.ApplicationController;
+import asyncTaskController.AsyncPostRequestHandler;
 
 public class TrackMapsActivity extends AppCompatActivity
         implements OnMapReadyCallback,
@@ -198,11 +205,23 @@ public class TrackMapsActivity extends AppCompatActivity
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,zoomlevel));
             points.add(latLng); //added
 
-            redrawLine(); //added
 
+            redrawLine(); //added
+            GeomagneticField field = new GeomagneticField(
+                    (float)location.getLatitude(),
+                    (float)location.getLongitude(),
+                    (float)location.getAltitude(),
+                    System.currentTimeMillis()
+            );
+
+            // getDeclination returns degrees
+            float mDeclination = field.getDeclination();
+            syncData(latLng , mDeclination);
         }
 
-        public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
+
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
         private void checkLocationPermission() {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -294,5 +313,21 @@ public class TrackMapsActivity extends AppCompatActivity
             options.add(point);
         }
         line = mGoogleMap.addPolyline(options); //add Polyline
+    }
+
+    private void syncData(LatLng latLng,float mDeclination) {
+        HashMap<String, String> params = new HashMap<String, String>();
+        JSONObject mJsonObject =  new JSONObject();
+        try {
+            mJsonObject.put("device_id" , String.valueOf("8013666612"));
+            mJsonObject.put("message_id" , String.valueOf(Math.random()));
+            mJsonObject.put("sensor_1" , String.valueOf(latLng.latitude));
+            mJsonObject.put("sensor_2" , String.valueOf(latLng.longitude));
+            mJsonObject.put("sensor_3" , "Yes");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(ApplicationController.getInstance(), String.valueOf(mDeclination) , Toast.LENGTH_LONG).show();
+        ApplicationController.getInstance().addToRequestQueue(AsyncPostRequestHandler.sendPostData(mJsonObject));
     }
 }
