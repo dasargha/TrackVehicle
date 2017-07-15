@@ -101,7 +101,7 @@ public class ViewinMapsActivity extends FragmentActivity implements OnMapReadyCa
                    if(mMap!=null)
                        placeMarker(mMap , nowLocation);
                }catch (Exception e){
-                   Log.d("Response", "Response " + e.getMessage());
+                   Log.d("Error", "Response " + e.getMessage());
                }
             }
         }, new Response.ErrorListener() {
